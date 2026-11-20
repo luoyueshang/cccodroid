@@ -37,7 +37,7 @@ import java.util.zip.ZipOutputStream;
  * 不导出，只靠分享时随 Intent 发出的一次性读授权访问；只认三个目录，别的路径一概拒绝。
  */
 public final class Share extends ContentProvider {
-    static final String AUTH = "cc.codroid.share";
+    static final String AUTH = "cc.codtest.share";
 
     /** URI 第一段 → 允许的根目录 */
     private static File root(Context c, String name) {

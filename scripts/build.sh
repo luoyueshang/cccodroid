@@ -27,8 +27,13 @@ if [ -d "$P" ]; then
   AAPT2=${AAPT2:-"env LD_LIBRARY_PATH=$P/lib $P/bin/aapt2"}
   AJAR=${ANDROID_JAR:-$P/framework/android.jar}
 else
-  # cccodroid 终端（作者 11-05 起在开发版里发版）：工具都在 PATH，钥匙与 android.jar 在 ~/.bldtools
+  # Prefer the Android SDK managed by android-build; retain the original tools path as fallback.
+  SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/.cccodroid/android-sdk}}
   B=${BLDTOOLS:-$HOME/.bldtools}
+  if [ -z "$ANDROID_JAR" ] && [ -d "$SDK/platforms" ]; then
+    PLATFORM=$(find "$SDK/platforms" -mindepth 1 -maxdepth 1 -type d -name 'android-*' | sort -V | tail -1)
+    [ -z "$PLATFORM" ] || ANDROID_JAR="$PLATFORM/android.jar"
+  fi
   # 原生小库优先用旧开发端搬来的 GCC 10（~/.bldtools/cc4），产物和以前逐字节一致；没有才用 clang
   if [ -x "$B/cc4" ]; then CC_ANDROID=${CC_ANDROID:-$B/cc4}; else CC_ANDROID=${CC_ANDROID:-cc}; fi
   # 旧开发端搬来的 JDK 17 与 d8.jar（~/.bldtools/jdk17）：javac 21 编出的 dex 不同，用它才和以前的包逐字节一致
@@ -46,7 +51,8 @@ fi
 KEY=${KEY:-$B/cccodroid-release.json}
 SIGN=${SIGN:-apklib}
 A=$ROOT/android
-OUT=$ROOT/dist
+OUT=${OUT:-$ROOT/dist}
+APK_NAME=${APK_NAME:-cccodroid.apk}
 [ -z "$KS" ] || [ "$SIGN" = apksigner ] || { echo "✗ KS 要配 SIGN=apksigner 用（默认的签名库只认 KEY 钥匙 JSON）"; exit 1; }
 [ -n "$KS" ] || [ -f "$KEY" ] || { echo "✗ 找不到签名钥匙 $KEY（不会自动生成：换钥匙会让已装用户无法升级）"; exit 1; }
 
@@ -171,25 +177,25 @@ if [ "$SIGN" = apksigner ]; then
   ( cd "$A/build" && zip -q unsigned.apk classes.dex && zip -q -0 unsigned.apk lib/arm64-v8a/libldlinux.so lib/arm64-v8a/libcc*.so )
   ${ZIPALIGN:-zipalign} -p -f 4 "$A/build/unsigned.apk" "$A/build/aligned.apk"
   if [ -n "$KS" ]; then
-    ${APKSIGNER:-apksigner} sign --ks "$KS" --ks-pass "pass:${KS_PASS:-android}" --out "$OUT/cccodroid.apk" "$A/build/aligned.apk"
+    ${APKSIGNER:-apksigner} sign --ks "$KS" --ks-pass "pass:${KS_PASS:-android}" --out "$OUT/$APK_NAME" "$A/build/aligned.apk"
   else
     # 钥匙 JSON → PKCS#8 DER + 证书，只在构建目录里待一下，签完就删
     trap 'rm -f "$A/build/key.pk8" "$A/build/cert.pem"' EXIT
     node -e 'const fs=require("fs"),c=require("crypto"),j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
       fs.writeFileSync(process.argv[2],c.createPrivateKey(j.key).export({type:"pkcs8",format:"der"}),{mode:0o600});
       fs.writeFileSync(process.argv[3],j.cert)' "$KEY" "$A/build/key.pk8" "$A/build/cert.pem"
-    ${APKSIGNER:-apksigner} sign --key "$A/build/key.pk8" --cert "$A/build/cert.pem" --out "$OUT/cccodroid.apk" "$A/build/aligned.apk"
+    ${APKSIGNER:-apksigner} sign --key "$A/build/key.pk8" --cert "$A/build/cert.pem" --out "$OUT/$APK_NAME" "$A/build/aligned.apk"
   fi
-  rm -f "$OUT/cccodroid.apk.idsig"
-  echo "  $(du -h "$OUT/cccodroid.apk" | cut -f1)"
+  rm -f "$OUT/$APK_NAME.idsig"
+  echo "  $(du -h "$OUT/$APK_NAME" | cut -f1)"
 else
 node --input-type=module -e "
 import fs from 'node:fs'; import { signApk } from '$ROOT/scripts/apklib.mjs';
-const r = signApk('$A/build/unsigned.apk', '$OUT/cccodroid.apk',
+const r = signApk('$A/build/unsigned.apk', '$OUT/$APK_NAME',
   [{ name: 'classes.dex', data: fs.readFileSync('$A/build/classes.dex'), method: 8 },
    ...['libldlinux.so', ...fs.readdirSync('$NL').filter((n) => /^libcc.*\.so$/.test(n)).sort()]
      .map((n) => ({ name: 'lib/arm64-v8a/' + n, data: fs.readFileSync('$A/build/lib/arm64-v8a/' + n), method: 0 }))], '$KEY');
 console.log('  ' + r.entries + ' 个条目 · ' + (r.size / 1048576).toFixed(2) + ' MB');
 "
 fi
-echo "✓ $OUT/cccodroid.apk"
+echo "✓ $OUT/$APK_NAME"

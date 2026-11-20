@@ -30,7 +30,7 @@ import java.util.Locale;
  * 也别给这个 provider 加导出之外的口子 —— 授权只经系统选择器一次性给出。
  */
 public final class Docs extends DocumentsProvider {
-    static final String AUTH = "cc.codroid.docs";
+    static final String AUTH = "cc.codtest.docs";
     private static final String ROOT_ID = "workspace";
 
     private File home;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cc.codroid"
+    package="cc.codtest"
     android:versionCode="135"
     android:versionName="0.7.7">
 
@@ -78,7 +78,7 @@
 
         <!-- 应用内浏览器（系统 WebView，见 BrowserActivity.java）：分屏 / 转屏不重建，免得页面重载 -->
         <activity
-            android:name=".BrowserActivity"
+            android:name="cc.codroid.BrowserActivity"
             android:exported="false"
             android:launchMode="singleTop"
             android:resizeableActivity="true"
@@ -86,7 +86,7 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|navigation" />
         <!-- 任务亲和性置空：别的应用声明同名 taskAffinity 也挤不进我们的任务栈冒充界面（StrandHogg 类，11-03 审查 L-21） -->
         <activity
-            android:name=".MainActivity"
+            android:name="cc.codroid.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:taskAffinity=""
@@ -117,7 +117,7 @@
         <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true" />
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="cc.codroid.shizuku"
+            android:authorities="cc.codtest.shizuku"
             android:multiprocess="false"
             android:enabled="true"
             android:exported="true"
@@ -125,16 +125,16 @@
 
         <!-- 往外分享文件（会话导出包、日志包）：不导出，只靠分享时一次性的读授权 -->
         <provider
-            android:name=".Share"
-            android:authorities="cc.codroid.share"
+            android:name="cc.codroid.Share"
+            android:authorities="cc.codtest.share"
             android:exported="false"
             android:grantUriPermissions="true" />
 
         <!-- 内部文件借给别的文件管理器（MT、系统「文件」）：安卓上私有目录没法靠 chmod 放开，
              只能走系统文件访问框架；权限只经系统选择器一次性授出，作用域只有 home/workspace（见 Docs.java） -->
         <provider
-            android:name=".Docs"
-            android:authorities="cc.codroid.docs"
+            android:name="cc.codroid.Docs"
+            android:authorities="cc.codtest.docs"
             android:exported="true"
             android:grantUriPermissions="true"
             android:permission="android.permission.MANAGE_DOCUMENTS">
@@ -144,11 +144,11 @@
         </provider>
 
         <!-- 应用内部回调：安装结果、通知栏填的配对码。不导出 -->
-        <receiver android:name=".Events" android:exported="false" />
+        <receiver android:name="cc.codroid.Events" android:exported="false" />
         <!-- 定时任务的系统闹钟：到点拉起网关。不导出 -->
-        <receiver android:name=".SchedAlarm" android:exported="false" />
+        <receiver android:name="cc.codroid.SchedAlarm" android:exported="false" />
         <!-- 系统广播：自更新装完、开机。不导出：系统发的照样收得到，别的应用（连同经 Shizuku 的 shell）发不进来（审查 v0513b 低-17） -->
-        <receiver android:name=".SysEvents" android:exported="false">
+        <receiver android:name="cc.codroid.SysEvents" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -161,7 +161,7 @@
              国产 ROM 会拦掉 MY_PACKAGE_REPLACED）。普通应用拿不到这个权限 -->
         <!-- specialUse：本地开发服务器 + 长任务，归不进系统列的那几类；没有 dataSync 那样的 6 小时上限 -->
         <service
-            android:name=".GatewayService"
+            android:name="cc.codroid.GatewayService"
             android:exported="true"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL">
@@ -171,7 +171,7 @@
 
         <!-- 设备工具的读屏 / 点按（A11y.java）。默认关；只有系统能绑定（BIND_ACCESSIBILITY_SERVICE） -->
         <service
-            android:name=".A11y"
+            android:name="cc.codroid.A11y"
             android:label="@string/a11y_label"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -182,6 +182,6 @@
         </service>
 
         <!-- 激活 Shizuku 时触发 binder 补投的一次性进程（见 ShzNudge.java）。不导出 -->
-        <service android:name=".ShzNudge" android:process=":shznudge" android:exported="false" />
+        <service android:name="cc.codroid.ShzNudge" android:process=":shznudge" android:exported="false" />
     </application>
 </manifest>

@@ -434,7 +434,7 @@ final class ShizukuSetup {
                 // 3 秒后经 shell 的 am start 把应用叫回前台。用 shell 叫回不受安卓后台起 Activity
                 // 的限制，也不依赖应用进程在后台没被厂商冻住——整段跑在 adbd 那侧。
                 String r = adb(20, "-s", serial, "shell",
-                    "am start -c android.intent.category.HOME 2>/dev/null || input keyevent 3; sleep 3; am start --activity-reorder-to-front -n cc.codroid/.MainActivity");
+                    "am start -c android.intent.category.HOME 2>/dev/null || input keyevent 3; sleep 3; am start --activity-reorder-to-front -n cc.codtest/cc.codroid.MainActivity");
                 adb(10, "disconnect", serial);
                 log("自动切出切回：" + tail(r));
             } catch (Exception e) {
